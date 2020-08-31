@@ -5,6 +5,17 @@
 ## 安装
 
 ```bash
+# 推荐使用 https://goproxy.cn 加速下载
+
+# Go 1.13 及以上（推荐）
+$ go env -w GO111MODULE=on
+$ go env -w GOPROXY=https://goproxy.cn,direct
+
+# 其他版本执行（不推荐 go env 与 export 同时执行）
+$ export GO111MODULE=on
+$ export GOPROXY=https://goproxy.cn 
+
+# 然后执行 go install 即可
 $ go install -u github.com/jamesbee/srv
 ```
 
