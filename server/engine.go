@@ -7,10 +7,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/jamesbee/srv/config"
 )
 
 type Engine struct {
@@ -22,6 +25,7 @@ type Engine struct {
 	customIndex  bool
 }
 
+// Serve generate url for given files or directories
 func (e *Engine) Serve(source ...string) *Engine {
 	if len(source) == 0 {
 		e.addDirs(".")
@@ -54,31 +58,15 @@ func (e *Engine) Serve(source ...string) *Engine {
 	return e
 }
 
-func (e *Engine) Listen(addr string) {
-	// Initializing the server in a goroutine so that
-	// it won't block the graceful shutdown handling below
-	go func() {
-		if err := e.srv.Start(addr); err != nil {
-			log.Fatalf("listen: %s\n", err)
-		}
-	}()
-}
-
-func (e *Engine) ListenTLS(addr, cert, key string) {
-	// Initializing the server in a goroutine so that
-	// it won't block the graceful shutdown handling below
-	go func() {
-		if err := e.srv.StartTLS(addr, cert, key); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
-		}
-	}()
-}
-
+// setup setups index routes info page and catch-all router
 func (e *Engine) setup(addr string) {
 	e.setupIndex()
 	e.setupFallback()
+	e.setupFavicon()
 }
 
+// setupFallback setups a catch-all router to support assets auto
+// discover
 func (e *Engine) setupFallback() {
 	e.srv.HTTPErrorHandler = func(err error, c echo.Context) {
 		if err != echo.ErrNotFound {
@@ -97,6 +85,22 @@ func (e *Engine) setupFallback() {
 	}
 }
 
+// setupFavicon setups a default favicon,
+// only setup when no custom favicon provided.
+func (e *Engine) setupFavicon() {
+	for _, f := range e.files {
+		// custom favicon provided
+		if strings.HasSuffix(f, "favicon.ico") {
+			return
+		}
+	}
+	favicon := config.Assets.MustBytes("favicon.ico")
+	e.srv.GET("/favicon.ico", func(c echo.Context) error {
+		return c.Blob(http.StatusOK, "image/x-icon", favicon)
+	})
+}
+
+// endless start Engine in daemon thread.
 func (e *Engine) endless() {
 	// Wait for interrupt signal to gracefully shutdown the server with
 	// a timeout of 5 seconds.
