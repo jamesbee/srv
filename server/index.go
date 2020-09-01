@@ -36,7 +36,7 @@ var html = template.Must(template.New("index").Parse(`
 	<ul>
 	{{ range .Dirs }}
 		{{ if eq . "." }}
-			<li><a href="/default">/default</a></li>
+			<li><a href="/{{ print $.Static }}">/{{ print $.Static }}</a></li>
 		{{ else }}
 			<li><a href="/{{- print . }}">{{ print . }}</a></li>
 		{{ end }}
@@ -50,7 +50,7 @@ var html = template.Must(template.New("index").Parse(`
 func (e *Engine) setupIndex() {
 	if e.indexHandler == nil {
 		e.indexHandler = func(c echo.Context) (err error) {
-			return sendFileList(c, e.index, e.files, e.dirs)
+			return indexRouteInfo(c, e.index, e.files, e.dirs)
 		}
 	}
 	e.srv.GET("/", e.indexHandler)
@@ -63,15 +63,16 @@ func (e *Engine) setupIndex() {
 	}
 }
 
-func sendFileList(c echo.Context, index, files, dirs []string) (err error) {
+func indexRouteInfo(c echo.Context, index, files, dirs []string) (err error) {
 	sort.Strings(index)
 	sort.Strings(files)
 	sort.Strings(dirs)
 	buf := new(bytes.Buffer)
 	err = html.ExecuteTemplate(buf, "index", H{
-		"Index": index,
-		"Files": files,
-		"Dirs":  dirs,
+		"Index":  index,
+		"Files":  files,
+		"Dirs":   dirs,
+		"Static": Static,
 	})
 	if err != nil {
 		return

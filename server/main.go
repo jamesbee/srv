@@ -21,6 +21,7 @@ var (
 	Static         string
 	Cert           string
 	Key            string
+	Exclude        []string
 )
 
 func CommandUp(cmd *cobra.Command, args []string) {

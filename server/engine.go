@@ -60,6 +60,7 @@ func (e *Engine) Serve(source ...string) *Engine {
 
 // setup setups index routes info page and catch-all router
 func (e *Engine) setup(addr string) {
+	setupExclude()
 	e.setupIndex()
 	e.setupFallback()
 	e.setupFavicon()
@@ -74,10 +75,28 @@ func (e *Engine) setupFallback() {
 		}
 		uri := genericPath(c.Request().RequestURI)
 		fs, err := os.Stat(uri)
-		if err != nil || fs.IsDir() {
+		if err != nil {
 			c.Error(err)
 			return
 		}
+
+		if fs.IsDir() {
+			// if working at pwd, capture all dirs
+			if len(e.dirs) == 1 && e.dirs[0] == "." {
+				// check if file excluded
+				if isExclude(uri) {
+					return
+				}
+				if err := doDispatch(c, fs); err != nil {
+					c.Error(err)
+				}
+			}
+			// only capture missing dir when serving pwd
+			// return for any other dirs
+			return
+		}
+
+		// capture any files here
 		err = e.doServeFile(uri)(c)
 		if err != nil {
 			c.Error(err)
@@ -121,4 +140,21 @@ func (e *Engine) endless() {
 	}
 
 	log.Println("Server exiting")
+}
+
+func setupExclude() {
+	exclude := make([]string, len(Exclude))
+	for i, ex := range Exclude {
+		exclude[i] = genericPath(ex)
+	}
+	copy(Exclude, exclude)
+}
+
+func isExclude(path string) bool {
+	for _, ex := range Exclude {
+		if strings.HasPrefix(path, ex) {
+			return true
+		}
+	}
+	return false
 }
