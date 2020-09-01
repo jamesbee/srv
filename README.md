@@ -22,6 +22,8 @@ Usage:
   srv up [flags]
 
 Flags:
+  -i, --dir string        Default url for current working dir, e.g. /pwd (default "pwd")
+  -e, --exclude strings   Exclude those dirs, e.g. ".git,.idea" (default [.git])
   -h, --help              Show this message
       --host string       Server listen host (default "127.0.0.1")
   -m, --markdown          Enable markdown parse (default true)
