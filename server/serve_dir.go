@@ -27,22 +27,33 @@ func (e *Engine) doServeDir(dp string) {
 	}
 	dp = clarifyPath(dp)
 	if dp == "." {
-		srv.GET("/"+Static, dispatch())
-		srv.GET("/"+Static+"/:uri", dispatch())
+		srv.GET("/"+Static, dispatch(true))
+		srv.GET("/"+Static+"/:uri", dispatch(true))
 	} else {
-		srv.GET("/"+dp, dispatch())
-		srv.GET("/"+dp+"/:uri", dispatch())
+		srv.GET("/"+dp, dispatch(false))
+		srv.GET("/"+dp+"/:uri", dispatch(false))
 	}
 }
 
-func dispatch() echo.HandlerFunc {
+func dispatch(bypass bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		// check if listing file action
 		uri := c.Param("uri")
 		if uri == "" || uri == "/" {
 			requestURI := strings.TrimPrefix(c.Request().RequestURI, "/"+Static)
 			return listFile(c, genericPath(requestURI))
 		}
-		fs, err := os.Stat(uri)
+
+		var requestUri string
+		if bypass {
+			// serve current dir and bypass path prefix
+			requestUri = c.Param("uri")
+		} else {
+			// serve file path
+			requestUri = c.Request().RequestURI
+		}
+
+		fs, err := os.Stat(genericPath(requestUri))
 		if err != nil {
 			return err
 		}
