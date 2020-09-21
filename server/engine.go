@@ -87,7 +87,7 @@ func (e *Engine) setupFallback() {
 				if isExclude(uri) {
 					return
 				}
-				if err := doDispatch(c, fs); err != nil {
+				if err := e.doDispatch(c, fs); err != nil {
 					c.Error(err)
 				}
 			}

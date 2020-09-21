@@ -27,15 +27,15 @@ func (e *Engine) doServeDir(dp string) {
 	}
 	dp = clarifyPath(dp)
 	if dp == "." {
-		srv.GET("/"+Static, dispatch(true))
-		srv.GET("/"+Static+"/:uri", dispatch(true))
+		srv.GET("/"+Static, e.dispatch(true))
+		srv.GET("/"+Static+"/:uri", e.dispatch(true))
 	} else {
-		srv.GET("/"+dp, dispatch(false))
-		srv.GET("/"+dp+"/:uri", dispatch(false))
+		srv.GET("/"+dp, e.dispatch(false))
+		srv.GET("/"+dp+"/:uri", e.dispatch(false))
 	}
 }
 
-func dispatch(bypass bool) echo.HandlerFunc {
+func (e *Engine) dispatch(bypass bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// check if listing file action
 		uri := c.Param("uri")
@@ -57,16 +57,16 @@ func dispatch(bypass bool) echo.HandlerFunc {
 		if err != nil {
 			return err
 		}
-		return doDispatch(c, fs)
+		return e.doDispatch(c, fs)
 	}
 }
 
-func doDispatch(c echo.Context, fs os.FileInfo) (err error) {
+func (e *Engine) doDispatch(c echo.Context, fs os.FileInfo) (err error) {
 	uri := genericPath(c.Request().RequestURI)
 	if fs.IsDir() {
 		return listFile(c, uri)
 	}
-	return c.File(uri)
+	return e.doServeFile(uri)(c)
 }
 
 func listFile(c echo.Context, uri string) (err error) {
