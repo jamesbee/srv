@@ -9,10 +9,7 @@ import (
 type H map[string]interface{}
 
 func genericPath(path string) string {
-	f := filepath.Clean(path)
-	if strings.HasPrefix(f, "..") {
-		panic(errors.New("Path leak detected! should not access parent dir: " + path))
-	}
+	f := clarifyPath(path)
 	if f[0] == '/' {
 		return "." + f
 	} else if !strings.HasPrefix(f, "./") {
@@ -22,10 +19,7 @@ func genericPath(path string) string {
 }
 
 func genericURL(path string) string {
-	f := filepath.Clean(path)
-	if strings.HasPrefix(f, "..") {
-		panic(errors.New("Path leak detected! should not access parent dir: " + path))
-	}
+	f := clarifyPath(path)
 	if f[0] == '.' {
 		f = f[1:]
 	}
@@ -34,6 +28,14 @@ func genericURL(path string) string {
 	}
 	if f[len(f)-1] == '/' {
 		return f[:len(f)-1]
+	}
+	return f
+}
+
+func clarifyPath(path string) string {
+	f := filepath.Clean(path)
+	if strings.HasPrefix(f, "..") {
+		panic(errors.New("Path leak detected! should not access parent dir: " + path))
 	}
 	return f
 }

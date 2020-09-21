@@ -25,6 +25,7 @@ func (e *Engine) doServeDir(dp string) {
 	if dp[len(dp)-1] == '/' {
 		dp = dp[:len(dp)-1]
 	}
+	dp = clarifyPath(dp)
 	if dp == "." {
 		srv.GET("/"+Static, dispatch())
 		srv.GET("/"+Static+"/:uri", dispatch())
